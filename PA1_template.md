@@ -2,23 +2,26 @@
 output: html_document
 ---
 
-`r library(knitr); opts_chunk$set(warning=FALSE, message=FALSE)`
+
 # Reproducible Research: Peer Assessment 1
 
 
 ##Loading and preprocessing the data
-```{r}
+
+```r
 unzip("activity.zip")
 data <- read.csv("activity.csv", header= TRUE, na.strings= "NA", colClasses = c("numeric", "Date", "numeric"))
 ```
 
 Get a list of different days.
-```{r  }
+
+```r
 dates <- unique(data$date)
 ```
 
 Split the data by dates, ignoring NA values.
-```{r warning=FALSE, message=FALSE }
+
+```r
 splitdata <- list()
 for (i in 1:length(dates)){
     splitdata[i] <- subset(data, data$date == dates[i] & data$steps != "NA")
@@ -26,24 +29,29 @@ for (i in 1:length(dates)){
 ```
 
 Get values for the graph, then create the graph.
-```{r  }
+
+```r
 total <- lapply(splitdata, sum)
 plot(dates, total, main="Total number of steps per day", xlab="Dates", ylab= "Total average steps")
 ```
 
+![plot of chunk unnamed-chunk-4](figure/unnamed-chunk-4.png) 
+
 Calculate the mean and median of each day.
-```{r  }
+
+```r
 mean <- mean(unlist(lapply(splitdata, sum)))
 median <- median(unlist(lapply(splitdata, sum)))
 ```
 
-The mean number of steps taken each day is `r round(mean, 2)`. The median number of steps are `r round(median,2)`
+The mean number of steps taken each day is 9354.23. The median number of steps are 1.0395 &times; 10<sup>4</sup>
 
 ## What is the average daily activity pattern?
 
 
 Split the data by observation interval.
-```{r warning=FALSE, message=FALSE }
+
+```r
 interval <- unique(data$interval)
 intervaldata <- list()
 for(i in 1:length(interval)){
@@ -52,47 +60,56 @@ for(i in 1:length(interval)){
 ```
 
 Get the mean and total, rounding the mean.
-```{r  }
+
+```r
 intertotal <- lapply(intervaldata, sum)
 intermean <- lapply(intervaldata, mean)
 intermean <- lapply(intermean, round)
 ```
 
 Plot the mean.
-```{r  }
+
+```r
 plot(interval, intermean, type="l", main="Average number of steps per 5 minute interval", xlab="Interval", ylab="Mean number of steps")
 ```
 
+![plot of chunk unnamed-chunk-8](figure/unnamed-chunk-8.png) 
+
 Get the max steps
-```{r  }
+
+```r
 maxinterval <- interval[which.max(intermean)]
 ```
 
-The maximum number of steps is taken at the `r maxinterval` interval.
+The maximum number of steps is taken at the 835 interval.
 
 ##Imputing missing values
 
 To impute the missing values, I created a vector of the indexs with NA values, then I extract the intervals of those indexs. Next I created a vector of the same length that has the daily averages for those intervals. Finally I insert each value of the new vector into the location indicated by the original index.
 
 Calculate the number of NA values.
-```{r  }
+
+```r
 numNA <- sum(is.na(data[,1]))
 ```
 
-The total number of NA values is `r numNA`.
+The total number of NA values is 2304.
 
 Get the location of the NA values.
-```{r  }
+
+```r
 naindex <- which(is.na(data)==TRUE) 
 ```
 
 Get the intervals at those locations.
-```{r  }
+
+```r
 naint <- data$interval[naindex]
 ```
 
 Build a vector of the average values at those intervals.
-```{r warning=FALSE, message=FALSE }
+
+```r
 nanewval <- numeric()
 for(i in 1:length(naint)) {
     for(j in 1:length(interval)){
@@ -104,12 +121,14 @@ for(i in 1:length(naint)) {
 ```
 
 Insert the vector into the original data.
-```{r  }
+
+```r
 data[naindex,1] <- nanewval
 ```
 
 Split the data by dates.
-```{r warning=FALSE, message=FALSE }
+
+```r
 filledsplitdata <- list()
 for (i in 1:length(dates)) {
     filledsplitdata[i] <- subset(data, data$date == dates[i]) 
@@ -117,31 +136,37 @@ for (i in 1:length(dates)) {
 ```
 
 Get the values for the graph, then create the graph.
-```{r  }
+
+```r
 filledtotal <- lapply(filledsplitdata, sum)
 plot(dates, filledtotal, main="Total number of steps per day with missing values added", xlab="Date", ylab="Total")
 ```
 
+![plot of chunk unnamed-chunk-16](figure/unnamed-chunk-16.png) 
+
 Calculate the mean and median.
-```{r  }
+
+```r
 filledmean <- mean(unlist(lapply(filledsplitdata, sum)))
 filledmedian <- median(unlist(lapply(filledsplitdata, sum)))
 ```
 
-The mean with the NA values filled is `r filledmean`. The median with the NA values filled is `r filledmedian`
+The mean with the NA values filled is 1.0766 &times; 10<sup>4</sup>. The median with the NA values filled is 1.0762 &times; 10<sup>4</sup>
 
 Get the difference.
-```{r  }
+
+```r
 mediandiff <- filledmedian-median
 meandiff <- filledmean-mean
 ```
 
-This results in a `r round(meandiff,2)` change in mean and a `r round(mediandiff,2)` change in median.
+This results in a 1411.41 change in mean and a 367 change in median.
 
 ## Are there differences in activity patterns between weekdays and weekends?
 
 Build a vector indicating which dates are weekends and weekdays.
-```{r warning=FALSE, message=FALSE }
+
+```r
 indicator <- character()
 days <- weekdays(data$date)
 key <- c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday")
@@ -154,18 +179,21 @@ for( i in 1:length(days)) {
 ```
 
 Convert the vector to factors and append to the original data.
-```{r  }
+
+```r
 factorlist <- as.factor(indicator)
 data <- cbind(data, factorlist)
 ```
 
 Split by weekend / weekday.
-```{r  }
+
+```r
 daysplit <- split(data, factorlist)
 ```
 
 Split the data by observation interval.
-```{r warning=FALSE, message=FALSE }
+
+```r
 weekdaydata <- list()
 for(i in 1:length(interval)){
     weekdaydata[i] <- subset(daysplit[[1]], daysplit[[1]]$interval == interval[i])
@@ -178,14 +206,18 @@ for(i in 1:length(interval)){
 ```
 
 Get the averages for each interval.
-```{r  }
+
+```r
 weekdaymean <- lapply(weekdaydata, mean)
 weekendmean <- lapply(weekenddata, mean)
 ```
 
 Create the graph.
-```{r  }
+
+```r
 par(mfrow=c(2,1))
 plot(interval, weekdaymean, type="l", main="Mean number of steps on weekdays", xlab="Interval", ylab="Mean steps")
 plot(interval, weekendmean, type="l", main="Mean number of steps on weekends", xlab="Interval", ylab="Mean steps")
 ```
+
+![plot of chunk unnamed-chunk-24](figure/unnamed-chunk-24.png) 
